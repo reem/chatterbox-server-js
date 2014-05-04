@@ -1,0 +1,12 @@
+{
+  "name": "chatterbox",
+  "version": "0.0.1",
+  "main": "server/main.js",
+  "author": "Hack Reactor",
+  "license": "Copyright 2013, Hack Reactor. All rights reserved.",
+  "dependencies": {},
+  "devDependencies": {
+    "request": "^2.34.0",
+    "chai": "^1.9.0"
+  }
+}
