@@ -52,7 +52,7 @@ var app = (function () {
   var getPublicRooms = function() {
     var that = this;
     $.when($.ajax({
-      url: 'https://api.parse.com/1/classes/chatterbox',
+      url: '/1/classes/chatterbox',
       type: 'GET',
       data: {
         order: '-createAt',
@@ -73,9 +73,6 @@ var app = (function () {
   };
 
   var updateSidebar = function () {
-    // getPublicRooms();
-    //check all other rooms available
-    //update sidebar
     var $sidebar = $('#sidebar');
     var $ul = $("<ul></ul>");
     $('#sidebar').find('ul').remove();
