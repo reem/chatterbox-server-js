@@ -26,5 +26,7 @@ pids
 logs
 results
 
+client/bower_components
+
 npm-debug.log
 node_modules
