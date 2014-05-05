@@ -8,6 +8,9 @@
  * *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html. */
 
 var fs = require("fs");
+var url = require("url");
+
+var messages = [];
 
 /* These headers will allow Cross-Origin Resource Sharing (CORS).
  * This CRUCIAL code allows this server to talk to websites that
@@ -45,13 +48,19 @@ var getFile = function (filename, callback) {
   });
 };
 
-var takeWhile = function (array, predicate) {
-  var result = [];
-  var i = 0;
-  while (predicate(array[i])) {
-    result.push(array[i++]);
-  }
-  return result;
+var getMessages = function (query, callback) {
+  callback(JSON.stringify(messages));
+};
+
+var postMessages = function (query) {
+  query = JSON.parse(query);
+  var obj = {
+    username: query.username,
+    roomname: query.roomname,
+    text: query.text
+  };
+  messages.unshift(obj);
+  console.log(messages);
 };
 
 module.exports.handleRequest = function(request, response) {
@@ -65,23 +74,24 @@ module.exports.handleRequest = function(request, response) {
 
   var wrapUpRequest = handleResponse(response);
 
-  if(request.url.indexOf("?") !== -1) {
-    request.url = takeWhile(request.url, function (chr) {
-      return chr !== "?";
-    }).join("");
-  }
+  var urlParts = url.parse(request.url, true);
 
-  if(request.url === "/") {
+  if(urlParts.pathname === "/") {
     getFile("./client/index.html", wrapUpRequest);
-  } else if (request.url === "/oldparseurl") {
-    // Handle ajax call
-    wrapUpRequest("hello darkness my old friend");
+  } else if (urlParts.pathname === "/1/classes/chatterbox") {
     if (request.method === "GET") {
-      // return a collection of messages
+      getMessages(urlParts.query, wrapUpRequest);
     } else if (request.method === "POST") {
-      // add new object to data.js file
+      var body = "";
+      request.on("data", function(data){
+        body += data;
+        if(body.length>1e6){
+          request.connection.destroy();
+        }
+        postMessages(body);
+      });
     }
   } else {
-    getFile("./client" + request.url, wrapUpRequest);
+    getFile("./client" + urlParts.pathname, wrapUpRequest);
   }
 };
