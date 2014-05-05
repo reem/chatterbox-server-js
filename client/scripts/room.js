@@ -1,5 +1,4 @@
-var _ = _;
-var $ = $;
+/* globals message, $, _ */
 
 var room = (function () {
 
@@ -34,16 +33,13 @@ var room = (function () {
           return datum.room === that.name;
         };
     $.ajax({
-      url: 'https://api.parse.com/1/classes/chatterbox',
+      url: '/1/classes/chatterbox',
       type: 'GET',
-      data: {
-        order: '-createAt',
-        limit: 100,
-      },
       contentType: 'application/json',
       success: function (data) {
         console.log('Chatterbox: Messages Received!');
-        data = _.map(data.results, function (datum) {
+        data = JSON.parse(data);
+        data = _.map(data, function (datum) {
           return new message.Message(datum.username, datum.text, datum.roomname);
         });
         that.messages = _.filter(data, selector);
