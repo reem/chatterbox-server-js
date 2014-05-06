@@ -1,8 +1,9 @@
 /* Import node's http module: */
-/* globals require */
+/* globals require, __dirname */
 var express = require("express");
 var fs = require("fs");
 var url = require("url");
+var path = require("path");
 
 var app = express();
 
@@ -58,7 +59,7 @@ var postMessages = function (query, callback) {
 };
 
 app.get("/", function(req, res){
-  getFile("./client/index.html", handleResponse(res));
+  res.sendfile("./client/index.html");
 });
 
 app.get("/classes/messages", function (req, res) {
@@ -76,6 +77,6 @@ app.post("/classes/messages", function (req, res) {
   });
 });
 
-app.get("*", function (req, res) {
-  getFile("./client" + url.parse(req.url).pathname, handleResponse(res));
+app.configure(function () {
+  app.use(express.static(path.join(__dirname, "../client")));
 });
