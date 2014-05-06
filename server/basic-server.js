@@ -1,36 +1,81 @@
 /* Import node's http module: */
 /* globals require */
-var http = require("http");
-var handleRequest = require("./request-handler.js").handleRequest;
+var express = require("express");
+var fs = require("fs");
+var url = require("url");
 
-/* Every server needs to listen on a port with a unique number. The
- * standard port for HTTP servers is port 80, but that port is
- * normally already claimed by another server and/or not accessible
- * so we'll use a higher port number that is not likely to be taken: */
-var port = 3000;
+var app = express();
 
-/* For now, since you're running this server on your local machine,
- * we'll have it listen on the IP address 127.0.0.1, which is a
- * special address that always refers to localhost. */
-var ip = "127.0.0.1";
+var server = app.listen(3000, function() {
+  console.log("Listening on port %d", server.address().port);
+});
 
+var messages = [];
 
+var defaultCorsHeaders = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "access-control-allow-headers": "content-type, accept",
+  "access-control-max-age": 10 // Seconds.
+};
 
-/* We use node's http module to create a server. Note, we called it 'server', but
-we could have called it anything (myServer, blahblah, etc.). The function we pass it (handleRequest)
-will, unsurprisingly, handle all incoming requests. (ps: 'handleRequest' is in the 'request-handler' file).
-Lastly, we tell the server we made to listen on the given port and IP. */
-var server = http.createServer(handleRequest);
-console.log("Listening on http://" + ip + ":" + port);
-server.listen(port, ip);
+var handleResponse = function (response) {
+  return function (end, statusCode) {
+    var statusCode = statusCode || 200;
 
-/* To start this server, run:
-     node basic-server.js
- *  on the command line.
+    /* Without this line, this server wouldn't work. See the note
+     * below about CORS. */
+    var headers = defaultCorsHeaders;
 
- * To connect to the server, load http://127.0.0.1:8080 in your web
- * browser.
+    response.writeHead(statusCode, headers);
 
- * server.listen() will continue running as long as there is the
- * possibility of serving more requests. To stop your server, hit
- * Ctrl-C on the command line. */
+    response.end(end);
+  };
+};
+
+var getFile = function (filename, callback) {
+  fs.readFile(filename, function (err, data) {
+    if (err) {
+      callback("", 404);
+    }
+    callback(data);
+  });
+};
+
+var getMessages = function (query, callback) {
+  callback(JSON.stringify({results: messages}), 200);
+};
+
+var postMessages = function (query, callback) {
+  query = JSON.parse(query);
+  var obj = {
+    username: query.username,
+    roomname: query.roomname,
+    text: query.text
+  };
+  messages.unshift(obj);
+  callback("", 201);
+};
+
+app.get("/", function(req, res){
+  getFile("./client/index.html", handleResponse(res));
+});
+
+app.get("/classes/messages", function (req, res) {
+  getMessages(url.parse(req.url).query, handleResponse(res));
+});
+
+app.post("/classes/messages", function (req, res) {
+  var body = "";
+  req.on("data", function(data){
+    body += data;
+    if(body.length>1e6){
+      req.connection.destroy();
+    }
+    postMessages(body, handleResponse(res));
+  });
+});
+
+app.get("*", function (req, res) {
+  getFile("./client" + url.parse(req.url).pathname, handleResponse(res));
+});
