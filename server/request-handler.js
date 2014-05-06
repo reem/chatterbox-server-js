@@ -42,17 +42,17 @@ var handleResponse = function (response) {
 var getFile = function (filename, callback) {
   fs.readFile(filename, function (err, data) {
     if (err) {
-      throw err;
+      callback("", 404);
     }
     callback(data);
   });
 };
 
 var getMessages = function (query, callback) {
-  callback(JSON.stringify(messages));
+  callback(JSON.stringify({results: messages}), 200);
 };
 
-var postMessages = function (query) {
+var postMessages = function (query, callback) {
   query = JSON.parse(query);
   var obj = {
     username: query.username,
@@ -60,7 +60,7 @@ var postMessages = function (query) {
     text: query.text
   };
   messages.unshift(obj);
-  console.log(messages);
+  callback("", 201);
 };
 
 module.exports.handleRequest = function(request, response) {
@@ -78,7 +78,7 @@ module.exports.handleRequest = function(request, response) {
 
   if(urlParts.pathname === "/") {
     getFile("./client/index.html", wrapUpRequest);
-  } else if (urlParts.pathname === "/1/classes/chatterbox") {
+  } else if (urlParts.pathname === "/classes/messages") {
     if (request.method === "GET") {
       getMessages(urlParts.query, wrapUpRequest);
     } else if (request.method === "POST") {
@@ -88,7 +88,7 @@ module.exports.handleRequest = function(request, response) {
         if(body.length>1e6){
           request.connection.destroy();
         }
-        postMessages(body);
+        postMessages(body, wrapUpRequest);
       });
     }
   } else {
