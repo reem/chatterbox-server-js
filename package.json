@@ -7,6 +7,7 @@
   "dependencies": {},
   "devDependencies": {
     "request": "^2.34.0",
-    "chai": "^1.9.0"
+    "chai": "^1.9.0",
+    "express": "3.x"
   }
 }
