@@ -33,13 +33,13 @@ var room = (function () {
           return datum.room === that.name;
         };
     $.ajax({
-      url: '/1/classes/chatterbox',
+      url: '/classes/messages',
       type: 'GET',
       contentType: 'application/json',
       success: function (data) {
         console.log('Chatterbox: Messages Received!');
         data = JSON.parse(data);
-        data = _.map(data, function (datum) {
+        data = _.map(data.results, function (datum) {
           return new message.Message(datum.username, datum.text, datum.roomname);
         });
         that.messages = _.filter(data, selector);

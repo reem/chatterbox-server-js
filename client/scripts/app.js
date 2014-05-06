@@ -52,7 +52,7 @@ var app = (function () {
   var getPublicRooms = function() {
     var that = this;
     $.when($.ajax({
-      url: '/1/classes/chatterbox',
+      url: '/classes/messages',
       type: 'GET',
       data: {
         order: '-createAt',
@@ -61,7 +61,7 @@ var app = (function () {
       success: function (data) {
         console.log('Chatterbox: Rooms Received!');
         // make a new room for each uniq room in messages
-        _.chain(data.results)
+        _.chain(JSON.parse(data).results)
           .pluck('roomname')
           .uniq()
           .each(function (roomname) { new room.PublicRoom(roomname); });

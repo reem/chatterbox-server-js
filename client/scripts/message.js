@@ -10,7 +10,7 @@ var message = (function () {
 
   Message.prototype.send = function () {
     $.ajax({
-      url: '/1/classes/chatterbox',
+      url: '/classes/messages',
       type: 'POST',
       data: this.serialize(),
       contentType: 'application/json',
