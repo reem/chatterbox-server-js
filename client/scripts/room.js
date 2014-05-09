@@ -5,11 +5,12 @@ var room = (function () {
   var Room = function (name, selector) {
     this.name = name;
     this.messages = [];
-    this.currentUsers = []; // Perhaps
-    this.selector = selector;
+    this.selector = selector || function (datum) {
+          return datum.room === that.name;
+    };
 
     this.getMessages();
-    setInterval(_.bind(this.getMessages, this), 500);
+    setInterval(this.getMessages.bind(this), 500);
   };
 
   Room.prototype.postMessage = function (message) {
@@ -28,10 +29,6 @@ var room = (function () {
   };
 
   Room.prototype.getMessages = function () {
-    var that = this;
-    var selector = this.selector || function (datum) {
-          return datum.room === that.name;
-        };
     $.ajax({
       url: '/classes/messages',
       type: 'GET',
@@ -42,11 +39,32 @@ var room = (function () {
         data = _.map(data.results, function (datum) {
           return new message.Message(datum.username, datum.text, datum.roomname);
         });
-        that.messages = _.filter(data, selector);
-      },
+        this.messages = _.filter(data, this.selector.bind(this));
+      }.bind(this),
       error: function () {
         console.log('Chatterbox: Failed to get messages.');
       }
+    });
+  };
+
+  Room.prototype.send = function () {
+    $.ajax({
+      url: '/classes/rooms',
+      type: 'POST',
+      data: this.serialize(),
+      contentType: 'application/json',
+      success: function () {
+        console.log('Chatterbox: Room Sent!');
+      },
+      error: function () {
+        console.log('Chatterbox: Failed to send room.');
+      }
+    });  
+  };
+
+  Room.prototype.serialize = function () {
+    return JSON.stringify({
+      name: this.name
     });
   };
 
