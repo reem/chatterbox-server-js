@@ -3,6 +3,7 @@ var express = require("express");
 var fs = require("fs");
 var url = require("url");
 var path = require("path");
+var _  = require("underscore");
 
 // Create the main express app.
 var app = express();
@@ -31,26 +32,14 @@ var defaultCorsHeaders = {
 // handleResponse takes a response object, and returns
 // a specialized function that will apply some return
 // string and statusCode to the response. Effectively,
-// this lets us just use handleResponse(res) as our
+// this lets us just use _.partial(sendData, res) as our
 // callback to many asynchronous functions and make
 // the logic of our code much simpler.
 //
 // Such is the power of closures.
-var handleResponse = function (response) {
-  return function (end, statusCode) {
-    // Default to 200.
-    statusCode = statusCode || 200;
-
-    // Without this line, this server wouldn't work. See the note
-    // above about CORS.
-    var headers = defaultCorsHeaders;
-
-    // Write out the header to the response.
-    response.writeHead(statusCode, headers);
-
-    // Write our data to end.
-    response.end(end);
-  };
+var sendData = function (res, data, statusCode) {
+  res.writeHead(statusCode || 200, exports.headers);
+  res.end(data);
 };
 
 // Our get request callback, which will post our messages
@@ -83,7 +72,7 @@ app.get("/", function(req, res){
 
 // Intercept the right GET requests.
 app.get("/classes/messages", function (req, res) {
-  getMessages(url.parse(req.url).query, handleResponse(res));
+  getMessages(url.parse(req.url).query, _.partial(sendData, res));
 });
 
 // Intercept the right POST requests.
@@ -98,7 +87,7 @@ app.post("/classes/messages", function (req, res) {
       req.connection.destroy();
     }
     // Post our message.
-    postMessages(body, handleResponse(res));
+    postMessages(body, _.partial(sendData, res));
   });
 });
 
