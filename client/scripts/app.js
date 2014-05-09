@@ -37,7 +37,7 @@ var app = (function () {
     name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
     var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
         results = regex.exec(location.search);
-    return results == null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    return !results ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
   };
 
   var currentRoom = new room.PublicRoom('main', function () { return true; });
@@ -52,18 +52,13 @@ var app = (function () {
   var getPublicRooms = function() {
     var that = this;
     $.when($.ajax({
-      url: '/classes/messages',
+      url: '/classes/rooms',
       type: 'GET',
-      data: {
-        order: '-createAt',
-      },
       contentType: 'application/json',
       success: function (data) {
         console.log('Chatterbox: Rooms Received!');
         // make a new room for each uniq room in messages
-        _.chain(JSON.parse(data).results)
-          .pluck('roomname')
-          .uniq()
+        _(JSON.parse(data).results)
           .each(function (roomname) { new room.PublicRoom(roomname); });
       },
       error: function () {
@@ -120,10 +115,14 @@ var app = (function () {
     });
   };
 
-  var init = function () {
+  var setupForms = function () {
     setupMessageForm();
     setupRoomForm();
     setupFriendForm();
+  };
+
+  var init = function () {
+    setupForms();
     getPublicRooms();
     updateSidebar();
     run();
