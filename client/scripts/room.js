@@ -6,7 +6,7 @@ var room = (function () {
     this.name = name;
     this.messages = [];
     this.selector = selector || function (datum) {
-          return datum.room === that.name;
+          return datum.room === this.name;
     };
 
     this.getMessages();
