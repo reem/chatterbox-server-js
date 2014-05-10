@@ -108,7 +108,8 @@ var app = (function () {
   var setupRoomForm = function () {
     $('#roomForm').submit(function (e) {
       e.preventDefault();
-      new room.PublicRoom(this.room.value);
+      var newRoom = new room.PublicRoom(this.room.value);
+      newRoom.send();
       this.room.value = '';
       updateSidebar();
       return false;

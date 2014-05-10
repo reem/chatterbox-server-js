@@ -56,31 +56,27 @@ var getFromCollection = function (collection, query, callback) {
   callback(JSON.stringify({results: messages}), 200);
 };
 
-var postToCollection = function (collection, query, callback, fields) {
-  query = JSON.parse(query);
-
-  var obj = {};
-  _.each(fields, function (field) {
-    obj[field] = query[field];
-  });
+var postToCollection = function (collection, query, callback) {
   // We take the O(n) hit here, once per message,
   // rather than reversing the list on the client
   // every time we make a GET request.
-  collection.unshift(obj);
+  collection.unshift(JSON.parse(query));
   // Dole out the right response code.
   callback("Messages Received.", 201);
 };
 
-var setupCollection = function (app, collectionName, collection, fields) {
+var setupCollection = function (app, collectionName, collection) {
   var collectionURL = "/classes/" + collectionName; // Fewer allocated strings.
   app.get(collectionURL, function (req, res) {
+    console.log("Serving a get request on: " + collectionURL);
     getFromCollection(collection, url.parse(req.url).query, _.partial(sendData, res));
   });
 
   app.post(collectionURL, function (req, res) {
+    console.log("Serving a post request on: " + collectionURL);
     // Such is the power of currying.
     // _ = missing middle argument = the data from the post request 
-    fromPostRequest(req, _.partial(postToCollection, collection, _, _.partial(sendData, res), fields));
+    fromPostRequest(req, _.partial(postToCollection, collection, _, _.partial(sendData, res)));
   });
 };
 
@@ -105,8 +101,8 @@ app.get("/", function(req, res){
   res.sendfile("./client/index.html");
 });
 
-setupCollection(app, "messages", messages, ["username", "text", "roomname"]);
-setupCollection(app, "rooms", rooms, ["name"]);
+setupCollection(app, "messages", messages);
+setupCollection(app, "rooms", rooms);
 
 app.configure(function () {
   // Some catch-all express magic to serve all of our client
