@@ -3,6 +3,7 @@
 To get this working:
 
 * `npm install` in the main directory
+* `npm install -g bower` to make sure you have the latest version of bower
 * `bower install` in the client directory
 * `nodemon server/server.js` in the main directory
 
