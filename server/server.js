@@ -15,6 +15,9 @@ var server = app.listen(3000, function() {
 // Our global messages array.
 var messages = [];
 
+// Our global rooms array.
+var rooms = [];
+
 // These headers are extremely important as they allow us to
 // run this file locally and get around the same origin policy.
 // Without these headers our server will not work. 
@@ -42,14 +45,18 @@ var sendData = function (res, data, statusCode) {
   res.end(data);
 };
 
-// Our get request callback, which will post our messages
-// array to the client over ajax.
-var getMessages = function (query, callback) {
-  // Just stringify and call the callback with statusCode 200.
+// These are two really cool functions. By just creating these
+// general getFrom/postTo functions it makes adding messages or rooms
+// extremely easy.
+// 
+// Unfortunately, you'll probably have to refactor this to work with
+// a more complex database where rooms aren't represented in the same
+// way as messages. It's clean for now though.
+var getFromCollection = function (collection, query, callback) {
   callback(JSON.stringify({results: messages}), 200);
 };
 
-var postMessages = function (query, callback) {
+var postToCollection = function (collection, query, callback) {
   query = JSON.parse(query);
   // Create our custom message object.
   var obj = {
@@ -60,25 +67,27 @@ var postMessages = function (query, callback) {
   // We take the O(n) hit here, once per message,
   // rather than reversing the list on the client
   // every time we make a GET request.
-  messages.unshift(obj);
+  collection.unshift(obj);
   // Dole out the right response code.
-  callback("", 201);
+  callback("Messages Received.", 201);
 };
 
-// Just redirect root to index.html
-app.get("/", function(req, res){
-  res.sendfile("./client/index.html");
-});
+var setupCollection = function (app, collectionName, collection) {
+  var collectionURL = "/classes/" + collectionName; // Fewer allocated strings.
+  app.get(collectionURL, function (req, res) {
+    getFromCollection(collection, url.parse(req.url).query, _.partial(sendData, res));
+  });
 
-// Intercept the right GET requests.
-app.get("/classes/messages", function (req, res) {
-  getMessages(url.parse(req.url).query, _.partial(sendData, res));
-});
+  app.post(collectionURL, function (req, res) {
+    // Such is the power of currying.
+    // _ = missing middle argument = the data from the post request 
+    fromPostRequest(req, _.partial(postToCollection, collection, _, _.partial(sendData, res)));
+  });
+};
 
-// Intercept the right POST requests.
-app.post("/classes/messages", function (req, res) {
+var fromPostRequest = function (req, callback) {
   var body = "";
-  req.on("data", function(data){
+  req.on("data", function (data) {
     body += data;
     // We do this seemingly tedious thing to protect
     // against DOS attacks, so one huge message can't
@@ -86,10 +95,19 @@ app.post("/classes/messages", function (req, res) {
     if (body.length > 1e3) {
       req.connection.destroy();
     }
-    // Post our message.
-    postMessages(body, _.partial(sendData, res));
   });
+  req.on("end", function () {
+    callback(body);
+  }); 
+};
+
+// Just redirect root to index.html
+app.get("/", function(req, res){
+  res.sendfile("./client/index.html");
 });
+
+setupCollection(app, "messages", messages);
+setupCollection(app, "rooms", rooms);
 
 app.configure(function () {
   // Some catch-all express magic to serve all of our client
