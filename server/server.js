@@ -56,18 +56,17 @@ var getFromCollection = function (collection, query, callback) {
   callback(JSON.stringify({results: messages}), 200);
 };
 
-var postToCollection = function (collection, query, callback) {
+var postToCollection = function (collection, query, callback, fields) {
   query = JSON.parse(query);
-  // Create our custom message object.
-  var obj = {
-    username: query.username,
-    roomname: query.roomname,
-    text: query.text
-  };
+
+  var obj = {};
+  _.each(fields, function (field) {
+    obj[field] = query[field];
+  });
   // We take the O(n) hit here, once per message,
   // rather than reversing the list on the client
   // every time we make a GET request.
-  collection.unshift(obj);
+  collection.unshift(field);
   // Dole out the right response code.
   callback("Messages Received.", 201);
 };
@@ -106,8 +105,8 @@ app.get("/", function(req, res){
   res.sendfile("./client/index.html");
 });
 
-setupCollection(app, "messages", messages);
-setupCollection(app, "rooms", rooms);
+setupCollection(app, "messages", messages, [username, text, roomname]);
+setupCollection(app, "rooms", rooms, [name]);
 
 app.configure(function () {
   // Some catch-all express magic to serve all of our client
