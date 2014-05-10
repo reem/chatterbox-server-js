@@ -66,12 +66,12 @@ var postToCollection = function (collection, query, callback, fields) {
   // We take the O(n) hit here, once per message,
   // rather than reversing the list on the client
   // every time we make a GET request.
-  collection.unshift(field);
+  collection.unshift(obj);
   // Dole out the right response code.
   callback("Messages Received.", 201);
 };
 
-var setupCollection = function (app, collectionName, collection) {
+var setupCollection = function (app, collectionName, collection, fields) {
   var collectionURL = "/classes/" + collectionName; // Fewer allocated strings.
   app.get(collectionURL, function (req, res) {
     getFromCollection(collection, url.parse(req.url).query, _.partial(sendData, res));
@@ -80,7 +80,7 @@ var setupCollection = function (app, collectionName, collection) {
   app.post(collectionURL, function (req, res) {
     // Such is the power of currying.
     // _ = missing middle argument = the data from the post request 
-    fromPostRequest(req, _.partial(postToCollection, collection, _, _.partial(sendData, res)));
+    fromPostRequest(req, _.partial(postToCollection, collection, _, _.partial(sendData, res), fields));
   });
 };
 
