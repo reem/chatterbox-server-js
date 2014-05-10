@@ -59,7 +59,7 @@ var app = (function () {
         console.log('Chatterbox: Rooms Received!');
         // make a new room for each uniq room in messages
         _(JSON.parse(data).results)
-          .each(function (roomname) { new room.PublicRoom(roomname); });
+          .each(function (room) { new room.PublicRoom(room.name); });
       },
       error: function () {
         console.log('Chatterbox: Failed to get rooms.');

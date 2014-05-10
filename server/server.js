@@ -105,8 +105,8 @@ app.get("/", function(req, res){
   res.sendfile("./client/index.html");
 });
 
-setupCollection(app, "messages", messages, [username, text, roomname]);
-setupCollection(app, "rooms", rooms, [name]);
+setupCollection(app, "messages", messages, ["username", "text", "roomname"]);
+setupCollection(app, "rooms", rooms, ["name"]);
 
 app.configure(function () {
   // Some catch-all express magic to serve all of our client
