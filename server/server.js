@@ -20,7 +20,7 @@ var rooms = [];
 
 // These headers are extremely important as they allow us to
 // run this file locally and get around the same origin policy.
-// Without these headers our server will not work. 
+// Without these headers our server will not work.
 var defaultCorsHeaders = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS",
@@ -31,29 +31,27 @@ var defaultCorsHeaders = {
 // This function is extremely useful. It lets us
 // abstract away the logic of writing response headers
 // and status-codes for our get and post ajax requests
-// 
-// handleResponse takes a response object, and returns
+//
+// sendData takes a response object, and returns
 // a specialized function that will apply some return
 // string and statusCode to the response. Effectively,
 // this lets us just use _.partial(sendData, res) as our
 // callback to many asynchronous functions and make
 // the logic of our code much simpler.
-//
-// Such is the power of closures.
 var sendData = function (res, data, statusCode) {
-  res.writeHead(statusCode || 200, exports.headers);
+  res.writeHead(statusCode || 200, defaultCorsHeaders);
   res.end(data);
 };
 
 // These are two really cool functions. By just creating these
 // general getFrom/postTo functions it makes adding messages or rooms
 // extremely easy.
-// 
+//
 // Unfortunately, you'll probably have to refactor this to work with
 // a more complex database where rooms aren't represented in the same
 // way as messages. It's clean for now though.
 var getFromCollection = function (collection, query, callback) {
-  callback(JSON.stringify({results: messages}), 200);
+  callback(JSON.stringify({results: collection}), 200);
 };
 
 var postToCollection = function (collection, query, callback) {
@@ -75,7 +73,7 @@ var setupCollection = function (app, collectionName, collection) {
   app.post(collectionURL, function (req, res) {
     console.log("Serving a post request on: " + collectionURL);
     // Such is the power of currying.
-    // _ = missing middle argument = the data from the post request 
+    // _ = missing middle argument = the data from the post request
     fromPostRequest(req, _.partial(postToCollection, collection, _, _.partial(sendData, res)));
   });
 };
@@ -93,7 +91,7 @@ var fromPostRequest = function (req, callback) {
   });
   req.on("end", function () {
     callback(body);
-  }); 
+  });
 };
 
 // Just redirect root to index.html
